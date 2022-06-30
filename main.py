@@ -1,43 +1,60 @@
-from ensurepip import version
-import constants
-from fetchData import fetch, params, results
-import sys
+from ast import arg
 import getopt
+import sys
+
+from parso import parse
+from fetchData import fetch, params, results
+import constants
+import argparse
 
 
-def parseArgs(argv):
+def parseArgs():
+    parser = argparse.ArgumentParser(description='Used to parse CPE info')
+    parser.add_argument('--production', '-p')
+    parser.add_argument('--version', '-v')
+    parser.add_argument('--outfile', '-o')
+    parser.add_argument('--regexStr', '-e')
+    parser.add_argument('--cpe23uri')
+    parser.add_argument('--verbose')
 
-    try:
-        opts, args = getopt.getopt(argv, "kpvo", [
-                                   "apiKey", "production", "version", "outfile", "cpe23uri", "verbose"])
-    except getopt.GetoptError:
-        print("main.py Get special produciton's CVE info from NVD. ")
-    print(opts, args)
-    for opt, arg in zip(opts, args):
-        print(opt[0], arg)
-        if opt[0] in ('-k', '--apikey'):
-            constants.apiKey = arg
-        elif opt[0] in ('-p', '--production'):
+    args = vars(parser.parse_args())
+    for key, arg in args.items():
+        if key == 'production':
             constants.production = arg
-        elif opt[0] in ('-v', '--version'):
+        elif key == 'version':
             constants.version = arg
-        elif opt[0] in ('-o', '--outfile'):
+        elif key == 'outfile':
             constants.outfile = arg
-        elif opt[0] == '--cpe23uri':
+        elif key == 'regexStr':
+            constants.regexStr = arg
+        elif key == 'cpe23uri':
             constants.cpe23uri = arg
-        elif opt[0] == '--verbose':
-            constants.verbose = True
+        elif key == 'verbose':
+            constants.verbose = arg
 
 
 if __name__ == "__main__":
-    parseArgs(sys.argv[1:])
-    if constants.production != None:
-        constants.totalResults = 1000
-        print('In fetch')
-        fetchCpe = fetch.Fetch()
-        i = 0
-        for cpe in fetchCpe.productions():
-            results.parseCpe(cpe)
-            i += 1
-            if i > 5:
-                break
+    parseArgs()
+
+    fetchInfo = fetch.Fetch()
+    if constants.cpe23uri != None:
+        #constants.totalResults = 10000
+        cves = fetchInfo.cves()
+        if constants.outfile != None:
+            results.saveCveToFile(filename=constants.outfile, cves=cves)
+        else:
+            for cve in cves:
+                print(results.parseCve(cve))
+    elif constants.production != None:
+        cpes = fetchInfo.productions()
+        if constants.outfile != None:
+            results.saveCpeToFile(filename=constants.outfile, cpes=cpes)
+        else:
+            for cpe in cpes:
+                print(results.parseCpe(cpe=cpe))
+        # i = 0
+        # for cpe in cpes:
+
+        #     i += 1
+        #     if i > 5:
+        #         break

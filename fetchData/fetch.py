@@ -27,7 +27,7 @@ class Fetch:
         self.cpeParams.keyword = constants.production
 
         url = constants.cpeUrls + '?' + str(self.cpeParams)
-        response = requests.get(url).json()
+        response = json.loads(requests.get(url).text)
 
         totalResults = constants.totalResults if constants.totalResults != None\
             and constants.totalResults < response['totalResults'] else response['totalResults']
@@ -38,8 +38,9 @@ class Fetch:
             response = requests.get(url).json()
 
             for cpe in response['result']['cpes']:
-                if constants.regexStr != None and re.search(constants.regexStr, cpe['titles'][0]['title'], re.M | re.I) != None:
-                    cpeResults.append(cpe)
+                if constants.regexStr != None:
+                    if re.search(constants.regexStr, cpe['titles'][0]['title'], re.M | re.I) != None:
+                        cpeResults.append(cpe)
                 elif constants.regexStr == None:
                     cpeResults.append(cpe)
 
@@ -48,30 +49,29 @@ class Fetch:
 
         return cpeResults
 
-    def cves(self, cpe23Uri):
+    def cves(self):
 
-        self.cveParams.cpeMatchString = cpe23Uri
-        url = constants.cpeUrls + '?' + str(self.cveParams)
+        self.cveParams.cpeMatchString = constants.cpe23uri
+        url = constants.cveUrls + '?' + str(self.cveParams)
         response = requests.get(url).json()
-        totalResults = response['totalResults']
-
+        print(url)
+        totalResults = constants.totalResults if constants.totalResults != None\
+            and constants.totalResults < response['totalResults'] else response['totalResults']
         print('totalResult:', totalResults)
-        for startIndex in range(self.cpeParams.startIndex, totalResults, self.cpeParams.resultsPerPage):
 
-            self.cpeParams.startIndex = startIndex
-            url = constants.cpeUrls + '?' + str(self.cpeParams)
-            print(url)
+        cveResults = []
+        for startIndex in range(self.cveParams.startIndex, totalResults, self.cveParams.resultsPerPage):
+
+            self.cveParams.startIndex = startIndex
+            url = constants.cveUrls + '?' + str(self.cveParams)
             response = requests.get(url).json()
 
-            for cpe in response['result']['cpes']:
-                title = cpe['titles'][0]['title']
-                cpe23Uri = cpe['cpe23Uri']
+            for cve in response['result']['CVE_Items']:
+                cveResults.append(cve)
 
-                print(title, cpe23Uri)
+        self.cveParams.startIndex = 0
 
-        self.cpeParams.startIndex = 0
-
-        pass
+        return cveResults
 
     def cveDetails(self, cve):
 

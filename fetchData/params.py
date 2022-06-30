@@ -36,7 +36,7 @@ class CveParams:
                  modEndDate=None,
                  pubStartDate=None,
                  pubEndDate=None,
-                 resultsPerPage=20,
+                 resultsPerPage=None,
                  startIndex=0):
 
         self.apiKey = apikey

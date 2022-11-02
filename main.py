@@ -2,7 +2,6 @@ from ast import arg
 import getopt
 import sys
 
-from parso import parse
 from fetchData import fetch, params, results
 import constants
 import argparse
